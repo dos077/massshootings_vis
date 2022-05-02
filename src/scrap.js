@@ -94,7 +94,7 @@ const main = async () => {
   );
   const indexDb = loadData(indexPath);
   const zipcodeDb = loadData(zipcodePath);
-  let nextPage = url2019;
+  let nextPage = url;
   while (nextPage) {
     console.log('\x1b[33m%s\x1b[0m', `scraping ${nextPage}`);
     await page.goto(nextPage);

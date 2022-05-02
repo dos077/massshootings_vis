@@ -6,11 +6,12 @@ const db = [];
 Object.keys(indexDb).forEach(id => {
   const { zipcode } = indexDb[id];
   if (!zipcode) return;
-  db.push({ ...indexDb[id], ...zipDb[zipcode] });
+  const date = new Date(indexDb[id].date)
+  db.push({ ...indexDb[id], ...zipDb[zipcode], date });
 });
 
 export default db;
 
-const { updated } = indexDb;
+const updated = new Date(indexDb.updated);
 
 export { updated };
