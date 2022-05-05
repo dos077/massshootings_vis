@@ -18,6 +18,16 @@
         <tr v-for="item in tableData" :key="item.id">
           <td>{{ item.date.toISOString().slice(0, 10) }}</td>
           <td>{{ item.city }}, {{ item.state }}</td>
+          <td>
+            w{{ Math.round(item.whitePercent) }}|
+            b{{ Math.round(item.blackPercent) }}|
+            h{{ Math.round(item.hispanicPercent) }}
+          </td>
+          <td>
+            <a :href="`https://www.city-data.com/zips/${item.zipcode}.html`">
+              {{ item.zipcode }}
+            </a>    
+          </td>
           <td>{{ item.killed }}</td>
           <td>{{ item.injured }}</td>
           <td>
@@ -34,6 +44,7 @@
 <script>
 import { mapState } from 'vuex';
 import db from '../helpers/db';
+import { keys, titles } from '../helpers/categoryKeys';
 
 const nToTxt = (x) => {
   let txt = '';
@@ -48,15 +59,9 @@ export default {
   name: 'BaseTable',
   data: () => ({
     headers: [
-      'date', 'location', 'killed', 'injured', 'source',
+      'date', 'location', 'races', 'zipcode', 'killed', 'injured', 'source',
     ],
-    keys: [
-      'population',
-      'density',
-      'medianHouseValue',
-      'medianAge',
-      'medianHousehold',
-    ],
+    keys
   }),
   computed: {
     ...mapState(['selectedKey', 'selectedYear', 'minX', 'maxX', 'byYear']),
@@ -73,11 +78,9 @@ export default {
     tableTitle() {
       if (!this.tableData) return false;
       const {
-        keys, selectedKey, minX, maxX,
+        selectedKey, minX, maxX,
       } = this;
-      const keyWords = ['Population', 'Pop. Density', 'M. House Value', 'M. Age', 'M. Household Size'];
-      const wordIndex = keys.findIndex(k => k === selectedKey);
-      return `Areas w. ${keyWords[wordIndex]} ${nToTxt(minX)}-${nToTxt(maxX)}`;
+      return `Areas w. ${titles[selectedKey]} ${nToTxt(minX)}-${nToTxt(maxX)}`;
     },
   },
 }

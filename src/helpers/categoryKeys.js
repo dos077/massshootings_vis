@@ -1,0 +1,22 @@
+const keys = [
+  'population',
+  'density',
+  'medianHouseValue',
+  'medianAge',
+  'whitePercent',
+  'blackPercent',
+  'hispanicPercent',
+];
+
+const titles = {
+  'population': 'population',
+  'density': 'population density',
+  'medianHouseValue': 'median house value',
+  'medianAge': 'median age',
+  'medianHousehold': 'median household',
+  'whitePercent': 'Whites',
+  'blackPercent': 'Blacks',
+  'hispanicPercent': 'Hispanics',
+}
+
+export { keys, titles };

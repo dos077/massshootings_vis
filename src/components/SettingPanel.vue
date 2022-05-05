@@ -40,7 +40,6 @@ db.forEach(({ state }) => {
 });
 stateOptions.sort();
 
-
 export default {
   name: 'SettingPanel',
   data: () => ({

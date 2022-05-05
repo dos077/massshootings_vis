@@ -11,6 +11,11 @@ export default createStore({
     minX: null,
     maxX: null,
     selectedYear: null,
+    populationSummary: null,
+    densitySummary: null,
+    medianHouseValueSummary: null,
+    medianAgeSummary: null,
+    medianHouseholdSummary: null,
   },
   getters: {
   },
@@ -36,6 +41,9 @@ export default createStore({
     setXrange(state, { minX, maxX }) {
       state.minX = minX;
       state.maxX = maxX;
+    },
+    setSummary(state, { chartKey, summary }) {
+      state[`${chartKey}Summary`] = summary;
     },
   },
   actions: {
