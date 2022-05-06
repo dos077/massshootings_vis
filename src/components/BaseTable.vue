@@ -64,14 +64,15 @@ export default {
     keys
   }),
   computed: {
-    ...mapState(['selectedKey', 'selectedYear', 'minX', 'maxX', 'byYear']),
+    ...mapState(['selectedKey', 'selectedYear', 'minX', 'maxX', 'byYear', 'entries']),
     tableData() {
       if (!this.selectedKey) return false;
       const {
         selectedKey, selectedYear, minX, maxX, byYear,
       } = this;
-      let entries = [...db];
-      if (byYear) entries = entries.filter(({ date }) => date.getUTCFullYear() === selectedYear);
+      let entries = [];
+      if (byYear) entries = db.filter(({ date }) => date.getUTCFullYear() === selectedYear);
+      else entries = [...this.entries];
       entries = entries.filter((dp) => dp[selectedKey] > minX && dp[selectedKey] <= maxX);
       return entries;
     },

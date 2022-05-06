@@ -4,17 +4,15 @@ const zipDb = require('../data/zipcodes.json');
 
 const getBreakPoints = (arr, div, chartKey) => {
   if (chartKey && chartKey.includes('Percent'))
-    return [10, 20, 30, 40, 50, 60, 70, 80, 90];
+    return [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
   let max = 0;
   let min = Infinity;
   arr.forEach((n) => {
     if (n > max) max = n;
     if (n < min) min = n;
   });
-  max *= 1.001;
-  min *= 0.999;
   if (min === 0) min = max / div;
-  if ((max - min) / div < min) {
+  if ((max - min) / div <= min) {
     const pts = [];
     const increment = (max - min) / div;
     for (let i = 1; i <= div; i += 1) {
@@ -66,7 +64,7 @@ const buildDataset = ({
   const borderColor = [];
   let comp = zipSelected ? zipDb[zipSelected] : null;
   rawData.forEach(({ yrr, x }) => {
-    if (comp && comp[chartKey] < x) {
+    if (comp && comp[chartKey] <= x) {
       backgroundColor.push('#b30000');
       borderColor.push('#fff');
       comp = null;
@@ -119,13 +117,12 @@ const years = [2019, 2020, 2021, 2022];
 const colors = ['#333333', '#666666', '#999999', '#cccccc'];
 
 const buildChart = ({
-  rawData, perMillion, zipSelected, chartKey, byYear,
+  rawData, perMillion, zipSelected, chartKey, byYear, breakPoints,
 }) => {
   let datasets = null;
   let labels = null;
-  let xrr = [];
+  const xrr = breakPoints;
   if (byYear) {
-    xrr = getBreakPoints(db.map((ev) => ev[chartKey]), 10, chartKey);
     labels = buildLabels(xrr);
     datasets = rawData.map((data, i) => buildDataset({
       rawData: data, perMillion, zipSelected, chartKey, label: years[i],
@@ -134,10 +131,9 @@ const buildChart = ({
     datasets = [buildDataset({
       rawData, perMillion, zipSelected, chartKey,
     })];
-    xrr = rawData.map(({ x }) => x);
     labels = buildLabels(xrr);
   }
   return { datasets, labels, xrr };
 };
 
-export { buildKeyIncrement, buildTable, getBreakPoints, buildChart, nToTxt, years, colors };
+export { buildKeyIncrement, buildTable, getBreakPoints, buildDataset, buildChart, nToTxt, years, colors };

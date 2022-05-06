@@ -14,9 +14,9 @@ const titles = {
   'medianHouseValue': 'median house value',
   'medianAge': 'median age',
   'medianHousehold': 'median household',
-  'whitePercent': 'Whites',
-  'blackPercent': 'Blacks',
-  'hispanicPercent': 'Hispanics',
+  'whitePercent': '%whites',
+  'blackPercent': '%blacks',
+  'hispanicPercent': '%hispanics',
 }
 
 export { keys, titles };

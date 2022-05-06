@@ -12,32 +12,34 @@
 import { shallowRef } from 'vue';
 import { mapState } from 'vuex';
 import Chart from 'chart.js/auto';
-import { buildTable, getBreakPoints, buildChart, nToTxt, years } from '../helpers/buildSeries';
+import { buildTable, getBreakPoints, buildChart, years } from '../helpers/buildSeries';
 import db from '../helpers/db';
 import { titles } from '../helpers/categoryKeys';
-
-const zipDb = require('../data/zipcodes.json');
 
 export default {
   name: 'BaseChart',
   props: ['chartId', 'chartKey'],
   data: () => ({
     chart: null,
-    xrr: null,
   }),
   computed: {
     ...mapState(['perMillion', 'zipSelected', 'entries', 'byYear']),
+    breakPoints() {
+      const { byYear, chartKey, entries } = this;
+      if (byYear) return getBreakPoints(db.map((ev) => ev[chartKey]), 10, chartKey);
+      return getBreakPoints(entries.map((ev) => ev[chartKey]), 10, chartKey);
+    },
     rawData() {
-      if (this.byYear) {
-        const breakPoints = getBreakPoints(db.map((ev) => ev[this.chartKey]), 10, this.chartKey);
+      const { byYear, chartKey, breakPoints } = this;
+      if (byYear) {
         const data = [];
-        [2019, 2020, 2021, 2022].forEach((yr) => {
+        years.forEach((yr) => {
           const entries = db.filter((ev) => ev.date.getUTCFullYear() === yr);
-          data.push(buildTable(this.chartKey, breakPoints, 10, entries));
+          data.push(buildTable(chartKey, breakPoints, 10, entries));
         });
         return data;
       }
-      return buildTable(this.chartKey, undefined, 10, this.entries);
+      return buildTable(chartKey, breakPoints, 10, this.entries);
     },
     chartTitle() {
       return titles[this.chartKey];
@@ -46,89 +48,41 @@ export default {
   watch: {
     rawData(rawData) {
       const {
-        perMillion, zipSelected, chartKey, byYear,
+        perMillion, zipSelected, chartKey, byYear, breakPoints,
       } = this;
       this.chart.data = buildChart({
-        rawData, perMillion, zipSelected, chartKey, byYear,
+        rawData, perMillion, zipSelected, chartKey, byYear, breakPoints,
       });
       this.chart.update();
-      this.updateSummary();
     },
     zipSelected(zipSelected) {
       const {
-        perMillion, rawData, chartKey, byYear,
+        perMillion, rawData, chartKey, byYear, breakPoints,
       } = this;
       this.chart.data = buildChart({
-        rawData, perMillion, zipSelected, chartKey, byYear,
+        rawData, perMillion, zipSelected, chartKey, byYear, breakPoints,
       });
       this.chart.update();
-      this.updateSummary();
     }
   },
   methods: {
     graphClick(index, datasetIndex) {
       console.log('clicked on', index, datasetIndex);
-      const minX = index > 0 ? this.xrr[index - 1] : 0;
-      const maxX = this.xrr[index];
+      const minX = index > 0 ? this.breakPoints[index - 1] : 0;
+      const maxX = this.breakPoints[index];
       this.$store.commit('setXrange', { minX, maxX });
       this.$store.commit('selectYear', years[datasetIndex]);
       this.$store.commit('selectKey', this.chartKey);
     },
-    updateSummary() {
-      const {
-        rawData, chartKey, byYear, zipSelected,
-      } = this;
-      if (zipSelected) {
-        let summary = [`No data for zipcodes with ${titles[chartKey]} similar to ${zipSelected}`];
-        const comp = zipDb[zipSelected];
-        const mIndex = (byYear ? rawData[0] : rawData).findIndex(({ x }) => comp[chartKey] < x);
-        if (mIndex > -1) {
-          if (byYear) {
-            const matchedArr = rawData.map(drr => drr[mIndex]);
-            const lastX = mIndex > 0 ? rawData[0][mIndex - 1].x : 0;
-            const incidents = [];
-            const victims = [];
-            matchedArr.forEach((yearData) => {
-              if (yearData.yrr && yearData.yrr.length > 0) {
-                incidents.push(yearData.yrr.length);
-                const total = yearData.yrr.map(({ killed, injured }) => killed + injured).reduce((a, b) => a + b);
-                victims.push(total);
-              } else {
-                incidents.push(0);
-                victims.push(0);
-              }
-            });
-            summary = [`Areas with ${titles[chartKey]} ${nToTxt(lastX)} - ${nToTxt(matchedArr[0].x)}`];
-            summary.push(...[2019, 2020, 2021, 2022].map((year, i) =>
-              `${year}: ${incidents[i]} incidents ${victims[i]} victims`
-            ));
-          } else {
-            const matchedData = rawData[mIndex];
-            const lastX = mIndex > 0 ? rawData[mIndex - 1].x : 0;
-            const incidents = matchedData.yrr ? matchedData.yrr.length : 0;
-            if (incidents > 0) {
-            let victims = 0;
-              matchedData.yrr.forEach((dp) => {
-                victims += dp.killed + dp.injured;
-              });
-              summary = [`Areas with ${titles[chartKey]} ${nToTxt(lastX)} - ${nToTxt(matchedData.x)}`];
-              summary.push(`${incidents} incidents of mass shooting with ${victims} victims`);
-            }
-          }
-        } 
-        this.$store.commit('setSummary', { chartKey, summary });
-      }
-    }
   },
   mounted() {
     const {
-      rawData, perMillion, zipSelected, chartKey, byYear,
+      rawData, perMillion, zipSelected, chartKey, byYear, breakPoints,
     } = this;
     const ctx = document.getElementById(this.chartId);
     const data = buildChart({
-      rawData, perMillion, zipSelected, chartKey, byYear,
+      rawData, perMillion, zipSelected, chartKey, byYear, breakPoints,
     });
-    this.xrr = data.xrr;
     const chart = new Chart(ctx, {
       type: 'bar',
       data,
@@ -146,6 +100,9 @@ export default {
           }, false);
           const { index, datasetIndex } = activePoints[0];
           this.graphClick(index, datasetIndex);
+        },
+        plugins: {
+          indexSelected: null,
         },
       },
     });
