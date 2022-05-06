@@ -1,6 +1,5 @@
 import db from './db';
-
-const zipDb = require('../data/zipcodes.json');
+import { zipDb } from './db';
 
 const getBreakPoints = (arr, div, chartKey) => {
   if (chartKey && chartKey.includes('Percent'))
@@ -57,21 +56,12 @@ const buildTable = (key, breakProps, div = 10, entries = db) => {
 
 
 const buildDataset = ({
-  rawData, perMillion, zipSelected, chartKey, label,
+  rawData, perMillion, label, mIndex
 }, color = '#666666') => {
   const data = [];
-  const backgroundColor = [];
-  const borderColor = [];
-  let comp = zipSelected ? zipDb[zipSelected] : null;
-  rawData.forEach(({ yrr, x }) => {
-    if (comp && comp[chartKey] <= x) {
-      backgroundColor.push('#b30000');
-      borderColor.push('#fff');
-      comp = null;
-    } else {
-      backgroundColor.push(color);
-      borderColor.push('rgba(0, 0, 0, 0)');
-    }
+  const backgroundColor = rawData.map((dp, i) => i === mIndex ? '#b30000' : color);
+  const borderColor = 'rgba(0, 0, 0, 0)';
+  rawData.forEach(({ yrr }) => {
     if (!yrr || yrr.length === 0) data.push(0);
     else {
       const victims = yrr.map((dp) => dp.killed + dp.injured).reduce((a, b) => a + b);
@@ -95,6 +85,7 @@ const buildDataset = ({
     data,
     backgroundColor,
     borderColor,
+    legendColor: color,
     borderWidth: 1,
     fill: true,
     type: 'bar',
@@ -122,14 +113,17 @@ const buildChart = ({
   let datasets = null;
   let labels = null;
   const xrr = breakPoints;
+  const mIndex = zipSelected ?
+    breakPoints.findIndex(x => zipDb[zipSelected][chartKey] <= x) :
+    null;
   if (byYear) {
     labels = buildLabels(xrr);
     datasets = rawData.map((data, i) => buildDataset({
-      rawData: data, perMillion, zipSelected, chartKey, label: years[i],
+      rawData: data, perMillion, mIndex, chartKey, label: years[i],
     }, colors[i]));
   } else {
     datasets = [buildDataset({
-      rawData, perMillion, zipSelected, chartKey,
+      rawData, perMillion, mIndex, chartKey,
     })];
     labels = buildLabels(xrr);
   }

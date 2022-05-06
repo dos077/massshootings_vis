@@ -47,22 +47,12 @@ export default {
   },
   watch: {
     rawData(rawData) {
-      const {
-        perMillion, zipSelected, chartKey, byYear, breakPoints,
-      } = this;
-      this.chart.data = buildChart({
-        rawData, perMillion, zipSelected, chartKey, byYear, breakPoints,
-      });
-      this.chart.update();
+      const { zipSelected } = this;
+      this.updateChart({ zipSelected, rawData });
     },
     zipSelected(zipSelected) {
-      const {
-        perMillion, rawData, chartKey, byYear, breakPoints,
-      } = this;
-      this.chart.data = buildChart({
-        rawData, perMillion, zipSelected, chartKey, byYear, breakPoints,
-      });
-      this.chart.update();
+      const { rawData } = this;
+      this.updateChart({ zipSelected, rawData });
     }
   },
   methods: {
@@ -74,39 +64,67 @@ export default {
       this.$store.commit('selectYear', years[datasetIndex]);
       this.$store.commit('selectKey', this.chartKey);
     },
-  },
-  mounted() {
-    const {
-      rawData, perMillion, zipSelected, chartKey, byYear, breakPoints,
-    } = this;
-    const ctx = document.getElementById(this.chartId);
-    const data = buildChart({
-      rawData, perMillion, zipSelected, chartKey, byYear, breakPoints,
-    });
-    const chart = new Chart(ctx, {
-      type: 'bar',
-      data,
-      options: {
-        scales: {
-          x: {
-            ticks: {
-              align: 'start',
+    newChart() {
+      const ctx = document.getElementById(this.chartId);
+      const data = { datasets: [], labels: [] }
+      const chart = new Chart(ctx, {
+        type: 'bar',
+        data,
+        options: {
+          scales: {
+            x: {
+              ticks: {
+                align: 'start',
+              },
+            },
+          },
+          onClick: (event) => {
+            const activePoints = chart.getElementsAtEventForMode(event, 'nearest', {
+              intersect: true,
+            }, false);
+            const { index, datasetIndex } = activePoints[0];
+            this.graphClick(index, datasetIndex);
+          },
+          plugins: {
+            indexSelected: null,
+            legend: {
+              labels: {
+                generateLabels(chart) {
+                  const labels = [];
+                  chart.data.datasets.forEach(({ label, legendColor }) => {
+                    labels.push({ text: label, fillStyle: legendColor })
+                  });
+                  return labels;
+                },
+              },
             },
           },
         },
-        onClick: (event) => {
-          const activePoints = chart.getElementsAtEventForMode(event, 'nearest', {
-            intersect: true,
-          }, false);
-          const { index, datasetIndex } = activePoints[0];
-          this.graphClick(index, datasetIndex);
-        },
-        plugins: {
-          indexSelected: null,
-        },
-      },
-    });
-    this.chart = shallowRef(chart);
+      });
+      this.chart = shallowRef(chart);
+    },
+    updateChart({
+        zipSelected, rawData,
+      }) {
+      if (!this.chart) this.newChart();
+      const { chartKey, perMillion, breakPoints, byYear } = this;
+      this.chart.data = buildChart({
+        rawData, perMillion, zipSelected, chartKey, byYear, breakPoints,
+      });
+      /* 
+      if (zipSelected) {
+        const comp = zipDb[zipSelected];
+        const mIndex = breakPoints.findIndex(x => comp[this.chartKey] <= x);
+        this.chart.options.plugins.indexSelected = mIndex;
+      } else {
+        this.chart.options.plugins.indexSelected = null;
+      } */
+      this.chart.update();
+    },
+  },
+  mounted() {
+    const { zipSelected, rawData } = this;
+    this.updateChart({ zipSelected, rawData });
   },
 };
 </script>

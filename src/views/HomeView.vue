@@ -1,7 +1,6 @@
 <template>
 <v-container>
   <setting-panel />
-  <zipcode-summary v-if="zipSelected" />
   <v-row>
     <v-col>
       <v-chip v-for="chip in graphOptions" :key="chip.key" @click="toggleGraph(chip.key)"
@@ -29,6 +28,7 @@
       </v-slide-x-transition>
     </v-col>
   </v-row>
+  <zipcode-summary v-if="zipSelected" />
 </v-container>
 </template>
 

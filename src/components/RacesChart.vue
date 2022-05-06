@@ -14,6 +14,7 @@ import { mapState } from 'vuex';
 import Chart from 'chart.js/auto';
 import { buildTable, nToTxt, buildDataset, colors } from '../helpers/buildSeries';
 import { titles } from '../helpers/categoryKeys';
+import { zipDb } from '../helpers/db';
 
 export default {
   name: 'RacesChart',  
@@ -52,44 +53,69 @@ export default {
       this.$store.commit('setXrange', { minX, maxX });
       this.$store.commit('selectKey', this.chartKeys[datasetIndex]);
     },
-    newChart({ datasets, labels }) {
-        const ctx = document.getElementById(this.chartId);
-        const chart = new Chart(ctx, {
-          type: 'bar',
-          data: { datasets, labels },
-          options: {
-            scales: {
-              x: {
-                ticks: {
-                  align: 'start',
+    newChart() {
+      const ctx = document.getElementById(this.chartId);
+      const data = { datasets: [], labels: [] }
+      const chart = new Chart(ctx, {
+        type: 'bar',
+        data,
+        options: {
+          scales: {
+            x: {
+              ticks: {
+                align: 'start',
+              },
+            },
+          },
+          onClick: (event) => {
+            const activePoints = chart.getElementsAtEventForMode(event, 'nearest', {
+              intersect: true,
+            }, false);
+            const { index, datasetIndex } = activePoints[0];
+            this.graphClick(index, datasetIndex);
+          },
+          plugins: {
+            indexSelected: null,
+            legend: {
+              labels: {
+                generateLabels(chart) {
+                  const labels = [];
+                  chart.data.datasets.forEach(({ label, legendColor }) => {
+                    labels.push({ text: label, fillStyle: legendColor })
+                  });
+                  return labels;
                 },
               },
             },
-            onClick: (event) => {
-              const activePoints = chart.getElementsAtEventForMode(event, 'nearest', {
-                intersect: true,
-              }, false);
-              const { index, datasetIndex } = activePoints[0];
-              this.graphClick(index, datasetIndex);
-            },
           },
-        });
+        },
+      });
         this.chart = shallowRef(chart);
     },
     updateChart({
         zipSelected, rawData,
       }) {
+      if (!this.chart) this.newChart();
       const { chartKeys, perMillion, breakPoints } = this;
-      const datasets = rawData.map((data, i) => buildDataset({
-        rawData: data, perMillion, zipSelected, chartKey: chartKeys[i], label: titles[chartKeys[i]],
-      }, colors[i]));
+      const datasets = rawData.map((data, i) => {
+        const chartKey = chartKeys[i];
+        const mIndex = zipSelected ?
+          breakPoints.findIndex(x => zipDb[zipSelected][chartKey] <= x) :
+          null;
+        return buildDataset({
+          rawData: data, perMillion, mIndex, chartKey, label: titles[chartKey],
+        }, colors[i]);
+      });
       const labels = breakPoints.map((x) => nToTxt(x));
-      if (this.chart) {
-        this.chart.data = { datasets, labels };
-        this.chart.update();
+      this.chart.data = { datasets, labels };
+      if (zipSelected) {
+        const comp = zipDb[zipSelected];
+        const mIndex = breakPoints.findIndex(x => comp[this.chartKey] <= x);
+        this.chart.options.plugins.indexSelected = mIndex;
       } else {
-        this.newChart({ datasets, labels });
+        this.chart.options.plugins.indexSelected = null;
       }
+      this.chart.update();
     },
   },
   mounted() {
