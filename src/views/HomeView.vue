@@ -21,7 +21,7 @@
         </v-card-title>
         <v-divider />
         <v-expand-transition>
-          <v-card-text v-show="infoPanelOn">
+          <v-card-text v-show="infoPanelOn" style="color: #333;">
             <div>
               <p v-for="(paragraph, i) in introTxt" :key="i" class="mb-4 text-body-1">
                 {{ paragraph }}
@@ -50,14 +50,14 @@
   <v-row>
     <v-col>
       <v-card elevation="0">
-        <v-card-text>
+        <v-card-text style="color: #333;">
           <div class="text-overline">Incidents distribution vs.</div>
+          <v-chip-group v-model="tabSelected" column variant="outlined" color="red">
+            <v-chip v-for="chip in graphOptions" :key="chip.key" @click="toggleGraph(chip.key)" label>
+              {{ chip.title }}
+            </v-chip>
+          </v-chip-group>
         </v-card-text>
-        <v-tabs center-active fixed-tabs show-arrows>
-          <v-tab v-for="chip in graphOptions" :key="chip.key" @click="toggleGraph(chip.key)">
-            {{ chip.title }}
-          </v-tab>
-        </v-tabs>
       </v-card>
     </v-col>
   </v-row>
@@ -97,6 +97,7 @@ export default {
   name: 'HomeView',
   data: () => ({
     graphSelected: [],
+    tabSelected: 0,
     multiGraph: false,
     infoPanelOn: false,
     settingPanelOn: false,

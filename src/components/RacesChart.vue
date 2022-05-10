@@ -9,7 +9,7 @@
 <script>
 import { shallowRef } from 'vue';
 import { mapState } from 'vuex';
-import { useDisplay } from 'vuetify'
+import { useDisplay } from 'vuetify';
 import Chart from 'chart.js/auto';
 import { buildTable, nToTxt, buildDataset, colors } from '../helpers/buildSeries';
 import { titles } from '../helpers/categoryKeys';

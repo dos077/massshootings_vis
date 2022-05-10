@@ -5,46 +5,82 @@
       <v-row>
         <v-col>
           <div class="text-overline">time frame</div>
-          <v-btn-toggle v-model="yearOption" mandatory variant="outlined" color="red">
-            <v-btn>by year</v-btn>
-            <v-btn>2019</v-btn>
-            <v-btn>2020</v-btn>
-            <v-btn>2021</v-btn>
-            <v-btn>2022</v-btn>
-            <v-btn>all</v-btn>
-          </v-btn-toggle>
+          <v-chip-group v-model="yearOption" mandatory variant="outlined" color="red" column>
+            <v-chip label>by year</v-chip>
+            <v-chip label>2019</v-chip>
+            <v-chip label>2020</v-chip>
+            <v-chip label>2021</v-chip>
+            <v-chip label>2022</v-chip>
+            <v-chip label>all</v-chip>
+          </v-chip-group>
         </v-col>
       </v-row>
       <v-row justify="start">
         <v-col cols="auto">
           <div class="text-overline">victims stats</div>
-          <v-btn-toggle :model-value="perMillion ? 1 :0" variant="outlined" color="red">
-            <v-btn @click="$store.commit('setPerMillion', false)">total</v-btn>
-            <v-btn @click="$store.commit('setPerMillion', true)">per million</v-btn>
-          </v-btn-toggle>
+          <v-chip-group v-model="statOption" variant="outlined" color="red">
+            <v-chip label>total</v-chip>
+            <v-chip label>per million</v-chip>
+          </v-chip-group>
         </v-col>
         <v-col cols="auto" v-if="perMillion">
           <div class="text-overline">Min Sample Population</div>
-          <v-btn-toggle :model-value="minSampleSelected" variant="outlined" color="red">
-            <v-btn @click="$store.commit('setMinSample', 10000)">10,000</v-btn>
-            <v-btn @click="$store.commit('setMinSample', 100000)">100,000</v-btn>
-            <v-btn @click="$store.commit('setMinSample', 1000000)">1,000,000</v-btn>
-          </v-btn-toggle>
+          <v-chip-group v-model="minSampleOption" variant="outlined" color="red">
+            <v-chip label @click="$store.commit('setMinSample', 10000)">10,000</v-chip>
+            <v-chip label @click="$store.commit('setMinSample', 100000)">100,000</v-chip>
+            <v-chip label @click="$store.commit('setMinSample', 1000000)">1,000,000</v-chip>
+          </v-chip-group>
         </v-col>
       </v-row>
       <v-row align="end">
         <v-col cols="auto">
           <div class="text-overline">highlight area</div>
-          <v-autocomplete :items="stateOptions" v-model="statePick" label="State"
-            style="min-width: 11rem;" class="mb-0" />
-        </v-col>
-        <v-col cols="auto">
-          <v-autocomplete :items="cityOptions" v-model="cityPick" label="City" no-data-text="select state"
-            style="min-width: 11rem;" />
-        </v-col>
-        <v-col cols="auto">
-          <v-autocomplete :items="zipOptions" v-model="zipPick" label="Zipcode" no-data-text="select city"
-            style="min-width: 11rem;" />
+          <v-menu v-model="stateMenu">
+            <template v-slot:activator="{ props }">
+              <v-chip v-bind="props" label variant="outlined" class="mr-2">
+                {{ statePick || 'state' }}
+              </v-chip>
+            </template>
+            <v-list>
+              <v-list-item v-for="option in stateOptions" :key="option" @click="statePick = option; stateMenu = false">
+                <v-list-item-title>{{ option }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+          <v-menu v-model="cityMenu">
+            <template v-slot:activator="{ props }">
+              <v-chip v-bind="props" label variant="outlined" class="mr-2">
+                {{ cityPick || 'city' }}
+              </v-chip>
+            </template>
+            <v-list v-if="statePick">
+              <v-list-item v-for="option in cityOptions" :key="option" @click="cityPick = option; cityMenu = false">
+                <v-list-item-title>{{ option }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+            <v-list v-else>
+              <v-list-item>
+                <v-list-item-title>select state first</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+          <v-menu v-model="zipMenu">
+            <template v-slot:activator="{ props }">
+              <v-chip v-bind="props" label variant="outlined" class="mr-2" :color="zipPick ? 'red' : undefined">
+                {{ zipPick || 'zipcode' }}
+              </v-chip>
+            </template>
+            <v-list v-if="statePick && cityPick">
+              <v-list-item v-for="option in zipOptions" :key="option" @click="zipPick = option; zipMenu = false">
+                <v-list-item-title>{{ option }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+            <v-list v-else>
+              <v-list-item>
+                <v-list-item-title>select city first</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
         </v-col>
       </v-row>
     </v-card>
@@ -68,9 +104,14 @@ export default {
   data: () => ({
     display: useDisplay(),
     yearOption: 0,
+    statOption: 0,
+    minSampleOption: 1,
+    stateMenu: false,
     statePick: null,
+    cityMenu: false,
     cityPick: null,
     stateOptions,
+    zipMenu: false,
     zipPick: null,
   }),
   computed: {
@@ -109,6 +150,9 @@ export default {
         this.$store.commit('setByYear', false);
         this.$store.commit('setYear', [null, 2019, 2020, 2021, 2022, null][to]);
       }
+    },
+    statOption(to) {
+      this.$store.commit('setPerMillion', to === 1);
     },
     zipPick(to) {      
       this.$store.commit('setZip', to);
