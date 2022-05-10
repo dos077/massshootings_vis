@@ -1,7 +1,5 @@
 <template>
-<v-card flat border>
-  <v-card-title>Incidents distribution vs. {{ chartTitle }}</v-card-title>
-  <v-divider />
+<v-card flat>
   <v-card-text>
     <canvas :id="chartId" />
   </v-card-text>
@@ -11,6 +9,7 @@
 <script>
 import { shallowRef } from 'vue';
 import { mapState } from 'vuex';
+import { useDisplay } from 'vuetify'
 import Chart from 'chart.js/auto';
 import { buildTable, getBreakPoints, buildChart, years } from '../helpers/buildSeries';
 import db from '../helpers/db';
@@ -21,9 +20,10 @@ export default {
   props: ['chartId', 'chartKey'],
   data: () => ({
     chart: null,
+    display: useDisplay(),
   }),
   computed: {
-    ...mapState(['perMillion', 'zipSelected', 'entries', 'byYear']),
+    ...mapState(['perMillion', 'zipSelected', 'entries', 'byYear', 'minSample']),
     breakPoints() {
       const { byYear, chartKey, entries } = this;
       if (byYear) return getBreakPoints(db.map((ev) => ev[chartKey]), 10, chartKey);
@@ -44,6 +44,9 @@ export default {
     chartTitle() {
       return titles[this.chartKey];
     },
+    isMobile() {
+      return this.display.smAndDown;
+    },
   },
   watch: {
     rawData(rawData) {
@@ -53,7 +56,22 @@ export default {
     zipSelected(zipSelected) {
       const { rawData } = this;
       this.updateChart({ zipSelected, rawData });
-    }
+    },
+    perMillion() {
+      const { rawData, zipSelected } = this;
+      this.updateChart({ zipSelected, rawData })
+    },
+    minSample() {
+      const { rawData, zipSelected } = this;
+      this.updateChart({ zipSelected, rawData })
+    },
+    isMobile(to) {
+      if (to) {
+        this.chart.options.aspectRatio = 1;
+      } else {
+        this.chart.options.aspectRatio = 2;
+      }
+    },
   },
   methods: {
     graphClick(index, datasetIndex) {
@@ -71,6 +89,7 @@ export default {
         type: 'bar',
         data,
         options: {
+          aspectRatio: this.isMobile ? 1 : undefined,
           scales: {
             x: {
               ticks: {
@@ -103,22 +122,12 @@ export default {
       });
       this.chart = shallowRef(chart);
     },
-    updateChart({
-        zipSelected, rawData,
-      }) {
+    updateChart({ zipSelected, rawData }) {
       if (!this.chart) this.newChart();
-      const { chartKey, perMillion, breakPoints, byYear } = this;
+      const { chartKey, breakPoints, byYear, minSample, perMillion } = this;
       this.chart.data = buildChart({
-        rawData, perMillion, zipSelected, chartKey, byYear, breakPoints,
+        rawData, perMillion, zipSelected, chartKey, byYear, breakPoints, minSample
       });
-      /* 
-      if (zipSelected) {
-        const comp = zipDb[zipSelected];
-        const mIndex = breakPoints.findIndex(x => comp[this.chartKey] <= x);
-        this.chart.options.plugins.indexSelected = mIndex;
-      } else {
-        this.chart.options.plugins.indexSelected = null;
-      } */
       this.chart.update();
     },
   },

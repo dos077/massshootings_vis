@@ -71,6 +71,15 @@ const scrapLocation = async (zip, page) => {
     else if (text.match('resident age')) res.medianAge = parseFloat(value.split(' ')[0]);
     else if (text.match('Average household size')) res.medianHousehold = parseFloat(value.split(' ')[0]);
   }
+  const liArr = await page.$$('li');
+  for (let i = 0; i < liArr.length; i++) {
+    const text = await liArr[i].evaluate(el => el.textContent);
+    const trr = text.split(' ');
+    const per = parseFloat(trr[trr.length - 1].replace('%', ''));
+    if (text.match('High school or higher')) res.highschool = per;
+    if (text.match('Bachelor\'s degree or higher')) res.college = per;
+    if (text.match('Now married')) res.married = per;
+  }
   return res;
 };
 

@@ -1,13 +1,64 @@
 <template>
 <v-container>
-  <setting-panel />
   <v-row>
     <v-col>
-      <v-chip v-for="chip in graphOptions" :key="chip.key" @click="toggleGraph(chip.key)"
-        label class="mr-3 mb-3"
-        :color="graphSelected.includes(chip.key) ? 'red' : undefined">
-        {{ chip.title }}
-      </v-chip>
+      <v-card flat>
+        <v-card-title>
+          Mass Shooting in USA
+          <v-spacer />
+          <v-btn icon variant="text" @click="infoPanelOn = true; settingPanelOn = false;">
+            <v-icon>mdi-information-outline</v-icon>
+          </v-btn>
+          <v-btn icon variant="text" @click="infoPanelOn = false; settingPanelOn = true;">
+            <v-icon>mdi-cog-outline</v-icon>
+          </v-btn>
+          <v-expand-x-transition>
+            <v-btn v-if="settingPanelOn || infoPanelOn"
+              icon elevation="0" @click="infoPanelOn = false; settingPanelOn = false">
+              <v-icon>mdi-chevron-up</v-icon>
+            </v-btn>
+          </v-expand-x-transition>
+        </v-card-title>
+        <v-divider />
+        <v-expand-transition>
+          <v-card-text v-show="infoPanelOn">
+            <div>
+              <p v-for="(paragraph, i) in introTxt" :key="i" class="mb-4 text-body-1">
+                {{ paragraph }}
+              </p>
+              <p class="mb-4 text-body-1">
+                Shooting incidents data from <a href="https://www.gunviolencearchive.org" target="new">
+                  gunviolencearchive.org
+                </a>
+              </p>
+              <p class="mb-4 text-body-1">
+                Demographic data from <a href="https://www.city-data.com" target="new">
+                  city-data.com
+                </a>
+              </p>
+            </div>
+          </v-card-text>
+        </v-expand-transition>
+        <v-expand-transition>
+          <v-card-text v-show="settingPanelOn">
+            <setting-panel />
+          </v-card-text>
+        </v-expand-transition>
+      </v-card>
+    </v-col>
+  </v-row>
+  <v-row>
+    <v-col>
+      <v-card elevation="0">
+        <v-card-text>
+          <div class="text-overline">Incidents distribution vs.</div>
+        </v-card-text>
+        <v-tabs center-active fixed-tabs show-arrows>
+          <v-tab v-for="chip in graphOptions" :key="chip.key" @click="toggleGraph(chip.key)">
+            {{ chip.title }}
+          </v-tab>
+        </v-tabs>
+      </v-card>
     </v-col>
   </v-row>
   <v-row>
@@ -27,8 +78,8 @@
         <base-table v-if="['whitePercent', 'blackPercent', 'hispanicPercent'].includes(selectedKey)" />
       </v-slide-x-transition>
     </v-col>
+    <zipcode-summary v-if="zipSelected" />
   </v-row>
-  <zipcode-summary v-if="zipSelected" />
 </v-container>
 </template>
 
@@ -47,6 +98,12 @@ export default {
   data: () => ({
     graphSelected: [],
     multiGraph: false,
+    infoPanelOn: false,
+    settingPanelOn: false,
+    introTxt: [
+      'Mass shootings have plagued America for decades and show no sign of slowing down. Gun Violence Archive is doing an excellent job of documenting these incidents and this personal project is a visualization of their data. Everyone in the US should pay more attention to this fact of life. Select a zipcode from a town/city of interest and see how many incidents have occurred in similar towns across the country.',
+      'Please note correlation doesn\'t mean causation. History doesn\'t repeat itself, but it rhymes. The visualized data is meant for a presentation on the history of senseless violence, not a predictor for future tragedies.',
+    ],
   }),
   computed: {
     ...mapState(['selectedKey', 'selectedYear', 'minX', 'maxX', 'byYear', 'zipSelected']),
@@ -55,7 +112,8 @@ export default {
         return keys;
       } else {
         return keys
-          .slice(0, 4)
+          .filter((key) => !['whitePercent', 'blackPercent', 'hispanicPercent', ].includes(key)
+        )
       }
     },
     displayKeys() {
@@ -67,6 +125,11 @@ export default {
       ];
       if (!this.byYear) arr.push({ key: 'races', title: 'races' });
       return arr;
+    },
+    graphButton() {
+      const { graphSelected, graphOptions } = this;
+      const key = graphSelected[0];
+      return graphOptions.findIndex((op) => op.key === key);
     },
   },
   methods: {

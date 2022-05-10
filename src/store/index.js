@@ -5,6 +5,7 @@ export default createStore({
   state: {
     entries: [...db],
     perMillion: false,
+    minSample: 100000,
     zipSelected: null,
     byYear: true,
     selectedKey: null,
@@ -44,6 +45,12 @@ export default createStore({
     },
     setSummary(state, { chartKey, summary }) {
       state[`${chartKey}Summary`] = summary;
+    },
+    setPerMillion(state, val) {
+      state.perMillion = val;
+    },
+    setMinSample(state, val) {
+      state.minSample = val;
     },
   },
   actions: {

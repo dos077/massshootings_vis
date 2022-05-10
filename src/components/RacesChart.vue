@@ -1,7 +1,5 @@
 <template>
-<v-card flat border>
-  <v-card-title>Incidents distribution vs. Races Distribution</v-card-title>
-  <v-divider />
+<v-card flat>
   <v-card-text>
     <canvas :id="chartId" />
   </v-card-text>
@@ -11,6 +9,7 @@
 <script>
 import { shallowRef } from 'vue';
 import { mapState } from 'vuex';
+import { useDisplay } from 'vuetify'
 import Chart from 'chart.js/auto';
 import { buildTable, nToTxt, buildDataset, colors } from '../helpers/buildSeries';
 import { titles } from '../helpers/categoryKeys';
@@ -20,12 +19,13 @@ export default {
   name: 'RacesChart',  
   data: () => ({
     chart: null,
+    display: useDisplay(),
     chartId: 'RaceBreakdownChart',
     breakPoints: [10,20,30,40,50,60,70,80,90,100],
-    chartKeys: ['whitePercent', 'blackPercent', 'hispanicPercent'],
+    chartKeys: ['blackPercent', 'hispanicPercent', 'whitePercent'],
   }),
   computed: {
-    ...mapState(['perMillion', 'zipSelected', 'entries', 'byYear']),
+    ...mapState(['perMillion', 'zipSelected', 'entries', 'byYear', 'minSample']),
     rawData() {
     const { breakPoints, entries, chartKeys } = this;
       const data = [];
@@ -33,6 +33,9 @@ export default {
         data.push(buildTable(chartKey, breakPoints, 10, entries));
       });
       return data;
+    },
+    isMobile() {
+      return this.display.smAndDown;
     },
   },
   watch: {
@@ -43,7 +46,22 @@ export default {
     zipSelected(zipSelected) {
       const { rawData }  = this;
       this.updateChart({ zipSelected, rawData });
-    }
+    },
+    perMillion() {
+      const { zipSelected, rawData }  = this;
+      this.updateChart({ zipSelected, rawData });
+    },
+    minSample() {
+      const { zipSelected, rawData }  = this;
+      this.updateChart({ zipSelected, rawData });
+    },
+    isMobile(to) {
+      if (to) {
+        this.chart.options.aspectRatio = 1;
+      } else {
+        this.chart.options.aspectRatio = 2;
+      }
+    },
   },
   methods: {
     graphClick(index, datasetIndex) {
@@ -60,6 +78,7 @@ export default {
         type: 'bar',
         data,
         options: {
+          aspectRatio: this.isMobile ? 1 : undefined,
           scales: {
             x: {
               ticks: {
@@ -96,14 +115,14 @@ export default {
         zipSelected, rawData,
       }) {
       if (!this.chart) this.newChart();
-      const { chartKeys, perMillion, breakPoints } = this;
+      const { chartKeys, perMillion, breakPoints, minSample } = this;
       const datasets = rawData.map((data, i) => {
         const chartKey = chartKeys[i];
         const mIndex = zipSelected ?
           breakPoints.findIndex(x => zipDb[zipSelected][chartKey] <= x) :
           null;
         return buildDataset({
-          rawData: data, perMillion, mIndex, chartKey, label: titles[chartKey],
+          rawData: data, perMillion, mIndex, chartKey, label: titles[chartKey], minSample,
         }, colors[i]);
       });
       const labels = breakPoints.map((x) => nToTxt(x));

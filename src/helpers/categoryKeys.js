@@ -1,11 +1,14 @@
 const keys = [
-  'population',
+  // 'population',
   'density',
   'medianHouseValue',
   'medianAge',
-  'whitePercent',
-  'blackPercent',
-  'hispanicPercent',
+  // 'whitePercent',
+  // 'blackPercent',
+  // 'hispanicPercent',
+  'highschool',
+  'college',
+  'married',
 ];
 
 const titles = {
@@ -17,6 +20,9 @@ const titles = {
   'whitePercent': '%whites',
   'blackPercent': '%blacks',
   'hispanicPercent': '%hispanics',
+  'highschool': '%highschool grad',
+  'college': '%college grad',
+  'married': '%married',
 }
 
 export { keys, titles };

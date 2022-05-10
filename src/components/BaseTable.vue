@@ -17,14 +17,12 @@
       <tbody>
         <tr v-for="item in tableData" :key="item.id">
           <td>{{ item.date.toISOString().slice(0, 10) }}</td>
+          <td>
+            {{ printN(item) }}
+          </td>
           <td>{{ item.city }}, {{ item.state }}</td>
           <td>
-            w{{ Math.round(item.whitePercent) }}|
-            b{{ Math.round(item.blackPercent) }}|
-            h{{ Math.round(item.hispanicPercent) }}
-          </td>
-          <td>
-            <a :href="`https://www.city-data.com/zips/${item.zipcode}.html`">
+            <a :href="`https://www.city-data.com/zips/${item.zipcode}.html`" target="new" style="text-decoration: none;">
               {{ item.zipcode }}
             </a>    
           </td>
@@ -45,26 +43,20 @@
 import { mapState } from 'vuex';
 import db from '../helpers/db';
 import { keys, titles } from '../helpers/categoryKeys';
-
-const nToTxt = (x) => {
-  let txt = '';
-  if (x > 1000000) txt = `${Math.round(x / 10000) / 100}m`;
-  else if (x > 1000) txt = `${Math.round(x / 100) / 10}k`;
-  else if (x > 10) txt = Math.round(x);
-  else txt = Math.round(x * 100) / 100;
-  return `   ${txt}`;
-}
+import { nToTxt } from '../helpers/buildSeries';
 
 export default {
   name: 'BaseTable',
   data: () => ({
-    headers: [
-      'date', 'location', 'races', 'zipcode', 'killed', 'injured', 'source',
-    ],
     keys
   }),
   computed: {
     ...mapState(['selectedKey', 'selectedYear', 'minX', 'maxX', 'byYear', 'entries']),
+    headers() {
+      return[
+        'date', titles[this.selectedKey], 'location', 'zipcode', 'killed', 'injured', 'source',
+      ];
+    },
     tableData() {
       if (!this.selectedKey) return false;
       const {
@@ -82,6 +74,11 @@ export default {
         selectedKey, minX, maxX,
       } = this;
       return `Areas w. ${titles[selectedKey]} ${nToTxt(minX)}-${nToTxt(maxX)}`;
+    },
+  },
+  methods: {
+    printN(item) {
+      return nToTxt(item[this.selectedKey]);
     },
   },
 }

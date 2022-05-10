@@ -56,7 +56,7 @@ const buildTable = (key, breakProps, div = 10, entries = db) => {
 
 
 const buildDataset = ({
-  rawData, perMillion, label, mIndex
+  rawData, perMillion, label, mIndex, minSample,
 }, color = '#666666') => {
   const data = [];
   const backgroundColor = rawData.map((dp, i) => i === mIndex ? '#b30000' : color);
@@ -74,7 +74,8 @@ const buildDataset = ({
             totalPop += population;
           }
         });
-        data.push(Math.round((victims * 100 * 1000000) / totalPop) / 100);
+        if (totalPop < minSample) data.push(0);
+        else data.push(Math.round((victims * 100 * 1000000) / totalPop) / 100);
       } else {
         data.push(victims);
       }
@@ -108,7 +109,7 @@ const years = [2019, 2020, 2021, 2022];
 const colors = ['#333333', '#666666', '#999999', '#cccccc'];
 
 const buildChart = ({
-  rawData, perMillion, zipSelected, chartKey, byYear, breakPoints,
+  rawData, perMillion, zipSelected, chartKey, byYear, breakPoints, minSample,
 }) => {
   let datasets = null;
   let labels = null;
@@ -119,11 +120,11 @@ const buildChart = ({
   if (byYear) {
     labels = buildLabels(xrr);
     datasets = rawData.map((data, i) => buildDataset({
-      rawData: data, perMillion, mIndex, chartKey, label: years[i],
+      rawData: data, perMillion, mIndex, chartKey, label: years[i], minSample,
     }, colors[i]));
   } else {
     datasets = [buildDataset({
-      rawData, perMillion, mIndex, chartKey,
+      rawData, perMillion, mIndex, chartKey, minSample,
     })];
     labels = buildLabels(xrr);
   }

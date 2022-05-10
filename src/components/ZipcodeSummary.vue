@@ -1,7 +1,6 @@
 <template>
-<v-row>
   <v-col>
-    <v-card flat border>
+    <v-card flat border cols="12" lg="6">
       <v-card-title>Mass shooting incidents from areas similar to {{ zipSelected }}</v-card-title>
       <v-list>
         <v-list-item v-for="(summary, i) in summaries" :key="i">
@@ -16,7 +15,6 @@
       </v-list>
     </v-card>
   </v-col>
-</v-row>
 </template>
 
 <script>
