@@ -36,6 +36,11 @@
                   city-data.com
                 </a>
               </p>
+              <p class="mb-4 text-body-1">
+                Source code <a href="https://github.com/dos077/massshootings_vis" target="new">
+                  github
+                </a>
+              </p>
             </div>
           </v-card-text>
         </v-expand-transition>
